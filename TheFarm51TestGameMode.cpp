@@ -3,6 +3,8 @@
 #include "TheFarm51TestGameMode.h"
 #include "TheFarm51TestCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+#include "HUDController.h"
+#include "AHUD.h"
 
 ATheFarm51TestGameMode::ATheFarm51TestGameMode()
 {
@@ -12,4 +14,8 @@ ATheFarm51TestGameMode::ATheFarm51TestGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
+	//static ConstructorHelpers::FObjectFinder<UWidgetComponent> GameHUDComponent(TEXT("/Game/HUD/GameHUD"));
+	//HUD = GameHUDComponent.Object;
+	//PlayerControllerClass = AHUDController::StaticClass();
+	//HUDClass = AHUD::StaticClass();
 }

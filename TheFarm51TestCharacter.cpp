@@ -13,6 +13,10 @@
 #include "LineTrace.h"
 #include "InteractableActor.h"
 #include "Inventory.h"
+#include "WeaponBase.h"
+#include "Components/Widget.h"
+#include "AHUD.h"
+#include "Net/UnrealNetwork.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATheFarm51TestCharacter
@@ -54,6 +58,10 @@ ATheFarm51TestCharacter::ATheFarm51TestCharacter()
 
 	LineTraceComp = CreateDefaultSubobject<ULineTrace>("LineTraceComponent");
 	Inventory = CreateDefaultSubobject<UInventory>("InventoryComponent");
+	WeaponEquiped = nullptr;
+	bItemInteractable = false;
+	ItemInteractionText = FText::FromString("Press F to pickup");
+	//GameHUD = CreateDefaultSubobject<AAHUD>("GameHUD");
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -133,7 +141,7 @@ void ATheFarm51TestCharacter::TraceForPickup()
 {
 	FVector Start = GetMesh()->GetBoneLocation(FName("head"));
 	FVector End = Start + FollowCamera->GetForwardVector() * 200.0f;
-	AActor* Actor = LineTraceComp->LineTraceSingle(Start,End,true);
+	AActor* Actor = LineTraceComp->LineTraceSingle(Start,End);
 	if (Actor)
 	{
 		if (AInteractableActor* Interactable = Cast<AInteractableActor>(Actor))
@@ -147,9 +155,31 @@ void ATheFarm51TestCharacter::TraceForPickup()
 				UE_LOG(LogTemp, Warning, TEXT("Hit Actor UE4Statue"));
 			}
 			//show hud
+			FString ItemName = (TEXT("%s"), *Actor->GetName());
+			FString ItemText = FString("Press F to pickup " + ItemName);
+			ItemInteractionText = FText::FromString(ItemText);
+			bItemInteractable = true;
+		}
+		if (AWeaponBase* WeaponToPick = Cast<AWeaponBase>(Actor))
+		{
+			FString ItemName = (TEXT("%s"), *Actor->GetName());
+			FString ItemText = FString("Press F to pickup " + ItemName);
+			ItemInteractionText = FText::FromString(ItemText);
+			bItemInteractable = true;
 		}
 		UE_LOG(LogTemp, Warning, TEXT("Hit Actor %s"), *Actor->GetName());
 	}
+	else
+	{
+		bItemInteractable = false;
+	}
+}
+
+void ATheFarm51TestCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ATheFarm51TestCharacter, Weapon);
+	DOREPLIFETIME(ATheFarm51TestCharacter, WeaponEquiped);
 }
 
 void ATheFarm51TestCharacter::Interact()
@@ -167,14 +197,48 @@ void ATheFarm51TestCharacter::ServerInteract_Implementation()
 	if(Role == ROLE_Authority){
 		FVector Start = GetMesh()->GetBoneLocation(FName("head"));
 		FVector End = Start + FollowCamera->GetForwardVector() * 200.0f;
-		AActor* Actor = LineTraceComp->LineTraceSingle(Start, End, true);
+		AActor* Actor = LineTraceComp->LineTraceSingle(Start, End);
 		if (Actor)
 		{
 			if (AInteractableActor* Interactable = Cast<AInteractableActor>(Actor))
 			{
 				Inventory->AddItem(Interactable);
 			}
+			else if (AWeaponBase* WeaponToPick = Cast<AWeaponBase>(Actor))
+			{
+				Weapon = WeaponToPick;
+				WeaponName = WeaponToPick->DefaultWeaponName;
+				On_Rep_WeaponInteracted();
+			}
 			UE_LOG(LogTemp, Warning, TEXT("Hit Actor %s"), *Actor->GetName());
 		}
 	}
+}
+
+void ATheFarm51TestCharacter::On_Rep_WeaponInteracted()
+{
+	if (Weapon)
+	{
+		if (!bWeaponEqupiped) {
+			Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("Grip_R"));
+			Weapon->SetActorEnableCollision(false);
+			bWeaponEqupiped = true;
+		}
+		else 
+		{
+			WeaponEquiped = Weapon;
+			WeaponEquiped->AttachToComponent(GetMesh(),FAttachmentTransformRules::SnapToTargetNotIncludingScale,FName("Back_Socket"));
+			WeaponEquiped->SetActorEnableCollision(false);
+		}
+		
+	}
+	else
+	{
+
+	}
+}
+
+UInventory* ATheFarm51TestCharacter::GetInventoryComp()
+{
+	return Inventory;
 }

@@ -27,7 +27,11 @@ protected:
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* MeshComp;
 
+	UPROPERTY(ReplicatedUsing = OnRep_PickedUp)
+	bool ObjectPickedUp;
 
+	UFUNCTION()
+	void OnRep_PickedUp();
 
 protected:
 	// Called when the game starts or when spawned
@@ -36,5 +40,5 @@ protected:
 public:	
 	// Called every frame
 	//virtual void Tick(float DeltaTime) override;
-
+	void InInventory(bool bIn);
 };

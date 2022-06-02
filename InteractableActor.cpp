@@ -4,6 +4,7 @@
 #include "InteractableActor.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AInteractableActor::AInteractableActor()
@@ -12,6 +13,15 @@ AInteractableActor::AInteractableActor()
 	//PrimaryActorTick.bCanEverTick = true;
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>("MeshComponent");
 	RootComponent = MeshComp;
+	ObjectPickedUp = false;
+	bReplicates = true;
+	bReplicateMovement = true;
+}
+
+void AInteractableActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AInteractableActor, ObjectPickedUp);
 }
 
 // Called when the game starts or when spawned
@@ -21,6 +31,21 @@ void AInteractableActor::BeginPlay()
 	if (Role == ROLE_Authority)
 	{
 		SetReplicates(true);
+	}
+}
+
+void AInteractableActor::OnRep_PickedUp()
+{
+	this->MeshComp->SetHiddenInGame(ObjectPickedUp);
+	this->SetActorEnableCollision(!ObjectPickedUp);
+}
+
+void AInteractableActor::InInventory(bool bIn)
+{
+	if (Role == ROLE_Authority)
+	{
+		ObjectPickedUp = bIn;
+		OnRep_PickedUp();
 	}
 }
 

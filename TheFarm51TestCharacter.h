@@ -22,6 +22,32 @@ class ATheFarm51TestCharacter : public ACharacter
 	class ULineTrace* LineTraceComp;
 
 	class UInventory* Inventory;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool bItemInteractable;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FText ItemInteractionText;
+
+	UPROPERTY(ReplicatedUsing = On_Rep_WeaponInteracted)
+	class AWeaponBase* WeaponEquiped;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool bWeaponEqupiped;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FName WeaponName;
+
+	UPROPERTY(ReplicatedUsing = On_Rep_WeaponInteracted)
+	class AWeaponBase* Weapon;
+
+	UFUNCTION()
+	void On_Rep_WeaponInteracted();
+
+	UFUNCTION(BlueprintCallable)
+	class UInventory* GetInventoryComp();
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	//class AAHUD* GameHUD;
 public:
 	ATheFarm51TestCharacter();
 
